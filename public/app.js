@@ -1,11 +1,384 @@
 /* ==========================================================================
-   Mafia Moderator & Secret Voting — Frontend Client
+   Mafia Moderator & Secret Voting — Frontend Client (EN / FR / AR)
    ========================================================================== */
 (function () {
   const socket = io();
 
+  /* ==========================================================================
+     0. Internationalization (English, French, Arabic)
+     ========================================================================== */
+  const I18N = {
+    en: {
+      brandTitle: 'MAFIA',
+      leaveBtn: 'Leave',
+      trialBadge: 'TRIAL NOMINATION RESULT',
+      heroTitle: 'Mafia Digital Assistant',
+      heroSubtitle: 'Minimalist secret role dealing & trial nomination tallying for in-person games (5–25 players).',
+      playerBadge: 'PLAYER (#1–#12+)',
+      joinTableHeading: 'Join a Table',
+      roomCodeLabel: 'Room Code',
+      roomCodePlaceholder: 'e.g. K7X2',
+      nicknameLabel: 'Your Nickname',
+      nicknamePlaceholder: 'Enter your name',
+      joinGameBtn: 'Join Game',
+      moderatorBadge: 'MODERATOR (#13)',
+      judgeConsoleHeading: 'Judge Console',
+      judgeConsoleDesc: 'Host a new game room to deal secret roles, manage player status, and trigger secret trial nominations.',
+      customCodeLabel: 'Custom 4-Char Code',
+      optionalLabel: '(optional)',
+      customCodePlaceholder: 'Auto-generate',
+      createRoomBtn: 'Create Room as Judge (#13)',
+      roomCodeMeta: 'ROOM CODE',
+      copyBtn: 'Copy',
+      liveVoteTallyMeta: 'LIVE VOTE TALLY',
+      roundControlsHeading: 'Round & Voting Controls',
+      roundControlsDesc: 'Trigger secret 2-person nominations for all living players or force tally early.',
+      startNominationsBtn: 'Start Secret Nominations',
+      forceTallyBtn: 'Force Tally Nominations',
+      resetRoundBtn: 'Reset Round',
+      roleSetupHeading: 'Role Setup & Dealing',
+      roleSetupDesc: 'Remaining connected players automatically become Townspeople.',
+      roleInputMafia: 'Mafia (Jack)',
+      roleInputAngel: 'Angel (Ace)',
+      roleInputSheriff: 'Sheriff (King)',
+      townspeopleAutoLabel: 'Townspeople (auto):',
+      totalPlayersLabel: 'Total Players:',
+      dealRolesBtn: 'Deal Roles',
+      playerRosterHeading: 'Player Roster',
+      playerMeta: 'PLAYER',
+      secretIdentityMeta: 'SECRET IDENTITY CARD',
+      tapToFlipHint: 'Tap card to reveal / hide',
+      secretRoleFrontTitle: 'SECRET ROLE',
+      secretNominationsHeading: 'Secret Trial Nominations',
+      firstNomineeLabel: 'First Nominee',
+      secondNomineeLabel: 'Second Nominee',
+      voteSubmittedNotice: '✓ Your secret nomination has been locked in. Waiting for remaining players...',
+      tablePlayersHeading: 'Table Players',
+
+      // Dynamic strings
+      roomPillJudge: (code) => `ROOM ${code} · #13`,
+      roomPillPlayer: (code) => `ROOM ${code}`,
+      votedCounter: (sub, tot) => `${sub}/${tot} voted`,
+      phase_lobby: 'LOBBY',
+      phase_voting: 'VOTING',
+      phase_results: 'RESULTS',
+      rolesDealtYes: 'Roles Dealt ✓',
+      rolesDealtNo: 'Not Dealt',
+      rosterSummary: (conn, tot, alive) => `${conn}/${tot} Online · ${alive} Alive`,
+      tableAliveSummary: (alive, tot) => `${alive}/${tot} Alive`,
+      waitingForPlayers: (code) => `Waiting for players to join with code <strong>${code}</strong>...`,
+      connected: 'Connected',
+      disconnected: 'Disconnected',
+      votedTag: 'Voted',
+      pendingTag: 'Pending',
+      aliveStatus: 'ALIVE',
+      deadStatus: 'DEAD',
+      toggleAliveTitle: 'Click to toggle Alive / Dead',
+
+      waitingJudgeDeal: 'Waiting for Judge (#13) to deal roles...',
+      roleDealtTapReveal: 'Role dealt! Tap to privately reveal',
+      unassignedLabel: 'UNASSIGNED',
+      noRoleYetTitle: 'No Role Yet',
+      noRoleYetDesc: 'Wait for the Judge to deal roles. Once dealt, tap this card to privately inspect your role.',
+      cardPrefix: (label) => `CARD: ${label.toUpperCase()}`,
+
+      select1stPlaceholder: 'Select 1st living player...',
+      select2ndPlaceholder: 'Select 2nd living player...',
+      votingInstrDefault: 'Privately select <strong>2 different living players</strong> to nominate for trial.',
+      votingInstrDead: 'You have been eliminated. Dead players cannot vote in nominations.',
+      btnEliminated: 'Eliminated (Cannot Vote)',
+      btnVoteSubmitted: 'Vote Submitted',
+      btnSubmitVote: 'Submit Vote',
+
+      onTrialTwo: (p1, p2) => `On Trial: ${p1} and ${p2}`,
+      onTrialOne: (p1) => `On Trial: ${p1}`,
+      onTrialNone: 'On Trial: None',
+      tallyPrefix: (summary) => `Tally: ${summary}`,
+      noVotesCast: 'No votes were cast.',
+
+      toastRoomReady: (code) => `Room ${code} ready!`,
+      toastCopiedCode: (code) => `Copied code ${code}`,
+      toastRolesDealt: 'Roles dealt privately to all players!',
+      toastNominationsStarted: 'Secret nomination voting started!',
+      toastNominationsTallied: 'Nominations tallied!',
+      toastRoundReset: 'Round votes & results cleared.',
+      toastJoinedAs: (code, name) => `Joined Room ${code} as ${name}`,
+      toastSelect2Diff: 'Please select 2 different living players.',
+      toastVoteSubmitted: 'Secret nomination submitted!',
+      toastNewRoleDealt: 'New secret role dealt! Tap your card to reveal.',
+
+      roles: {
+        Mafia: {
+          title: 'Mafia',
+          cardLabel: 'Jack',
+          description: 'Eliminate Townspeople each night and blend in during daytime discussions.'
+        },
+        Angel: {
+          title: 'Angel',
+          cardLabel: 'Ace',
+          description: 'Choose one player each night to protect from elimination by the Mafia.'
+        },
+        Sheriff: {
+          title: 'Sheriff',
+          cardLabel: 'King',
+          description: 'Investigate one player each night to learn whether they belong to the Mafia.'
+        },
+        Townsperson: {
+          title: 'Townsperson',
+          cardLabel: 'Plain',
+          description: 'Observe, deduce, and vote during the day to find and put the Mafia on trial.'
+        }
+      }
+    },
+
+    fr: {
+      brandTitle: 'MAFIA',
+      leaveBtn: 'Quitter',
+      trialBadge: 'RÉSULTAT DES NOMINATIONS',
+      heroTitle: 'Assistant Numérique Mafia',
+      heroSubtitle: 'Distribution secrète des rôles et décompte des votes de nomination pour parties en présentiel (5–25 joueurs).',
+      playerBadge: 'JOUEUR (#1–#12+)',
+      joinTableHeading: 'Rejoindre une Table',
+      roomCodeLabel: 'Code de la Salle',
+      roomCodePlaceholder: 'ex. K7X2',
+      nicknameLabel: 'Votre Pseudo',
+      nicknamePlaceholder: 'Entrez votre nom',
+      joinGameBtn: 'Rejoindre la Partie',
+      moderatorBadge: 'MODÉRATEUR (#13)',
+      judgeConsoleHeading: 'Console du Juge',
+      judgeConsoleDesc: 'Créez une salle pour distribuer les rôles secrets, gérer le statut des joueurs et lancer les votes.',
+      customCodeLabel: 'Code à 4 caractères',
+      optionalLabel: '(optionnel)',
+      customCodePlaceholder: 'Auto-générer',
+      createRoomBtn: 'Créer une Salle comme Juge (#13)',
+      roomCodeMeta: 'CODE SALLE',
+      copyBtn: 'Copier',
+      liveVoteTallyMeta: 'VOTES EN DIRECT',
+      roundControlsHeading: 'Contrôles de Manche & Vote',
+      roundControlsDesc: 'Lancez les nominations secrètes (2 choix) pour les joueurs en vie ou forcez le décompte.',
+      startNominationsBtn: 'Lancer les Nominations Secrètes',
+      forceTallyBtn: 'Forcer le Décompte',
+      resetRoundBtn: 'Réinitialiser la Manche',
+      roleSetupHeading: 'Configuration & Distribution des Rôles',
+      roleSetupDesc: 'Les autres joueurs connectés deviennent automatiquement des Villageois.',
+      roleInputMafia: 'Mafia (Valet)',
+      roleInputAngel: 'Ange (As)',
+      roleInputSheriff: 'Shérif (Roi)',
+      townspeopleAutoLabel: 'Villageois (auto) :',
+      totalPlayersLabel: 'Total Joueurs :',
+      dealRolesBtn: 'Distribuer les Rôles',
+      playerRosterHeading: 'Liste des Joueurs',
+      playerMeta: 'JOUEUR',
+      secretIdentityMeta: 'CARTE D’IDENTITÉ SECRÈTE',
+      tapToFlipHint: 'Touchez la carte pour révéler / masquer',
+      secretRoleFrontTitle: 'RÔLE SECRET',
+      secretNominationsHeading: 'Nominations Secrètes au Procès',
+      firstNomineeLabel: 'Premier Nominé',
+      secondNomineeLabel: 'Deuxième Nominé',
+      voteSubmittedNotice: '✓ Votre nomination secrète est enregistrée. En attente des autres joueurs...',
+      tablePlayersHeading: 'Joueurs à la Table',
+
+      roomPillJudge: (code) => `SALLE ${code} · #13`,
+      roomPillPlayer: (code) => `SALLE ${code}`,
+      votedCounter: (sub, tot) => `${sub}/${tot} ont voté`,
+      phase_lobby: 'SALON',
+      phase_voting: 'VOTE',
+      phase_results: 'RÉSULTATS',
+      rolesDealtYes: 'Rôles Distribués ✓',
+      rolesDealtNo: 'Non Distribués',
+      rosterSummary: (conn, tot, alive) => `${conn}/${tot} En ligne · ${alive} En vie`,
+      tableAliveSummary: (alive, tot) => `${alive}/${tot} En vie`,
+      waitingForPlayers: (code) => `En attente de joueurs avec le code <strong>${code}</strong>...`,
+      connected: 'Connecté',
+      disconnected: 'Déconnecté',
+      votedTag: 'A voté',
+      pendingTag: 'En attente',
+      aliveStatus: 'EN VIE',
+      deadStatus: 'MORT',
+      toggleAliveTitle: 'Cliquer pour basculer En vie / Mort',
+
+      waitingJudgeDeal: 'En attente de la distribution par le Juge (#13)...',
+      roleDealtTapReveal: 'Rôle attribué ! Touchez pour révéler en privé',
+      unassignedLabel: 'NON ATTRIBUÉ',
+      noRoleYetTitle: 'Aucun Rôle',
+      noRoleYetDesc: 'Attendez que le Juge distribue les rôles. Touchez ensuite cette carte pour découvrir votre rôle.',
+      cardPrefix: (label) => `CARTE : ${label.toUpperCase()}`,
+
+      select1stPlaceholder: 'Choisir le 1er joueur en vie...',
+      select2ndPlaceholder: 'Choisir le 2e joueur en vie...',
+      votingInstrDefault: 'Sélectionnez en privé <strong>2 joueurs en vie différents</strong> à nominer pour le procès.',
+      votingInstrDead: 'Vous avez été éliminé. Les joueurs morts ne peuvent pas voter.',
+      btnEliminated: 'Éliminé (Vote impossible)',
+      btnVoteSubmitted: 'Vote Envoyé',
+      btnSubmitVote: 'Envoyer le Vote',
+
+      onTrialTwo: (p1, p2) => `En Procès : ${p1} et ${p2}`,
+      onTrialOne: (p1) => `En Procès : ${p1}`,
+      onTrialNone: 'En Procès : Aucun',
+      tallyPrefix: (summary) => `Décompte : ${summary}`,
+      noVotesCast: 'Aucun vote enregistré.',
+
+      toastRoomReady: (code) => `Salle ${code} prête !`,
+      toastCopiedCode: (code) => `Code ${code} copié`,
+      toastRolesDealt: 'Rôles distribués en privé à tous les joueurs !',
+      toastNominationsStarted: 'Les nominations secrètes ont commencé !',
+      toastNominationsTallied: 'Votes décomptés !',
+      toastRoundReset: 'Votes et résultats de la manche réinitialisés.',
+      toastJoinedAs: (code, name) => `Salle ${code} rejointe en tant que ${name}`,
+      toastSelect2Diff: 'Veuillez sélectionner 2 joueurs en vie différents.',
+      toastVoteSubmitted: 'Nomination secrète envoyée !',
+      toastNewRoleDealt: 'Nouveau rôle secret reçu ! Touchez votre carte.',
+
+      roles: {
+        Mafia: {
+          title: 'Mafia',
+          cardLabel: 'Valet',
+          description: 'Éliminez les Villageois chaque nuit et fondez-vous dans la masse pendant la journée.'
+        },
+        Angel: {
+          title: 'Ange',
+          cardLabel: 'As',
+          description: 'Choisissez un joueur chaque nuit pour le protéger de la Mafia.'
+        },
+        Sheriff: {
+          title: 'Shérif',
+          cardLabel: 'Roi',
+          description: 'Enquêtez sur un joueur chaque nuit pour savoir s’il appartient à la Mafia.'
+        },
+        Townsperson: {
+          title: 'Villageois',
+          cardLabel: 'Simple',
+          description: 'Observez, déduisez et votez le jour pour démasquer et juger la Mafia.'
+        }
+      }
+    },
+
+    ar: {
+      brandTitle: 'مافيا',
+      leaveBtn: 'مغادرة',
+      trialBadge: 'نتيجة ترشيحات المحاكمة',
+      heroTitle: 'المساعد الرقمي للعبة مافيا',
+      heroSubtitle: 'توزيع سري للأدوار وفرز تلقائي لترشيحات المحاكمة للألعاب الواقعية (5–25 لاعباً).',
+      playerBadge: 'لاعب (#1–#12+)',
+      joinTableHeading: 'انضم إلى طاولة اللعب',
+      roomCodeLabel: 'رمز الغرفة',
+      roomCodePlaceholder: 'مثال: K7X2',
+      nicknameLabel: 'الاسم المستعار',
+      nicknamePlaceholder: 'أدخل اسمك',
+      joinGameBtn: 'انضمام للعبة',
+      moderatorBadge: 'القاضي / الحكم (#13)',
+      judgeConsoleHeading: 'لوحة تحكم القاضي',
+      judgeConsoleDesc: 'أنشئ غرفة جديدة لتوزيع الأدوار السرية، إدارة حالة اللاعبين، وبدء التصويت السري للمحاكمة.',
+      customCodeLabel: 'رمز مخصص من 4 أحرف',
+      optionalLabel: '(اختياري)',
+      customCodePlaceholder: 'توليد تلقائي',
+      createRoomBtn: 'إنشاء غرفة كقاضٍ (#13)',
+      roomCodeMeta: 'رمز الغرفة',
+      copyBtn: 'نسخ',
+      liveVoteTallyMeta: 'عداد الأصوات المباشر',
+      roundControlsHeading: 'التحكم بالجولة والتصويت',
+      roundControlsDesc: 'ابدأ الترشيح السري (اختيار اسمين) لجميع اللاعبين الأحياء أو قم بفرز الأصوات مبكراً.',
+      startNominationsBtn: 'بدء الترشيح السري',
+      forceTallyBtn: 'فرز الأصوات الآن',
+      resetRoundBtn: 'إعادة ضبط الجولة',
+      roleSetupHeading: 'إعداد وتوزيع الأدوار',
+      roleSetupDesc: 'بقية اللاعبين المتصلين يصبحون تلقائياً من المواطنين (Townspeople).',
+      roleInputMafia: 'مافيا (ولد / Jack)',
+      roleInputAngel: 'ملاك (آص / Ace)',
+      roleInputSheriff: 'شريف (شايب / King)',
+      townspeopleAutoLabel: 'المواطنون (تلقائي):',
+      totalPlayersLabel: 'إجمالي اللاعبين:',
+      dealRolesBtn: 'توزيع الأدوار',
+      playerRosterHeading: 'قائمة اللاعبين',
+      playerMeta: 'اللاعب',
+      secretIdentityMeta: 'بطاقة الهوية السرية',
+      tapToFlipHint: 'اضغط على البطاقة لإظهار / إخفاء الدور',
+      secretRoleFrontTitle: 'دور سري',
+      secretNominationsHeading: 'ترشيحات المحاكمة السرية',
+      firstNomineeLabel: 'المرشح الأول',
+      secondNomineeLabel: 'المرشح الثاني',
+      voteSubmittedNotice: '✓ تم تسجيل ترشيحك السري. بانتظار تصويت بقية اللاعبين...',
+      tablePlayersHeading: 'لاعبو الطاولة',
+
+      roomPillJudge: (code) => `غرفة ${code} · #13`,
+      roomPillPlayer: (code) => `غرفة ${code}`,
+      votedCounter: (sub, tot) => `${sub}/${tot} صوّتوا`,
+      phase_lobby: 'الانتظار',
+      phase_voting: 'تصويت',
+      phase_results: 'النتائج',
+      rolesDealtYes: 'تم توزيع الأدوار ✓',
+      rolesDealtNo: 'لم يتم التوزيع',
+      rosterSummary: (conn, tot, alive) => `${conn}/${tot} متصل · ${alive} حي`,
+      tableAliveSummary: (alive, tot) => `${alive}/${tot} أحياء`,
+      waitingForPlayers: (code) => `بانتظار انضمام اللاعبين عبر الرمز <strong>${code}</strong>...`,
+      connected: 'متصل',
+      disconnected: 'غير متصل',
+      votedTag: 'صوّت',
+      pendingTag: 'بانتظار',
+      aliveStatus: 'حي',
+      deadStatus: 'ميت',
+      toggleAliveTitle: 'اضغط للتبديل بين حي / ميت',
+
+      waitingJudgeDeal: 'بانتظار قيام القاضي (#13) بتوزيع الأدوار...',
+      roleDealtTapReveal: 'تم توزيع الدور! اضغط لكشف دورك بسرية',
+      unassignedLabel: 'غير محدد',
+      noRoleYetTitle: 'لا يوجد دور بعد',
+      noRoleYetDesc: 'انتظر حتى يقوم القاضي بتوزيع الأدوار، ثم اضغط على البطاقة لمعرفة دورك بسرية.',
+      cardPrefix: (label) => `البطاقة: ${label}`,
+
+      select1stPlaceholder: 'اختر اللاعب الحي الأول...',
+      select2ndPlaceholder: 'اختر اللاعب الحي الثاني...',
+      votingInstrDefault: 'اختر بسرية <strong>لاعبين حيين مختلفين</strong> لترشيحهما للمحاكمة.',
+      votingInstrDead: 'لقد تم إقصاؤك. لا يمكن للاعبين الأموات التصويت.',
+      btnEliminated: 'مُقصى (لا يمكن التصويت)',
+      btnVoteSubmitted: 'تم إرسال الصوت',
+      btnSubmitVote: 'إرسال التصويت',
+
+      onTrialTwo: (p1, p2) => `في المحاكمة: ${p1} و ${p2}`,
+      onTrialOne: (p1) => `في المحاكمة: ${p1}`,
+      onTrialNone: 'في المحاكمة: لا أحد',
+      tallyPrefix: (summary) => `الأصوات: ${summary}`,
+      noVotesCast: 'لم يتم الإدلاء بأي أصوات.',
+
+      toastRoomReady: (code) => `الغرفة ${code} جاهزة!`,
+      toastCopiedCode: (code) => `تم نسخ الرمز ${code}`,
+      toastRolesDealt: 'تم توزيع الأدوار بسرية لجميع اللاعبين!',
+      toastNominationsStarted: 'بدأ التصويت السري للترشيحات!',
+      toastNominationsTallied: 'تم فرز الترشيحات!',
+      toastRoundReset: 'تمت إعادة ضبط أصوات ونتائج الجولة.',
+      toastJoinedAs: (code, name) => `انضممت للغرفة ${code} باسم ${name}`,
+      toastSelect2Diff: 'يرجى اختيار لاعبين حيين مختلفين.',
+      toastVoteSubmitted: 'تم إرسال ترشيحك السري!',
+      toastNewRoleDealt: 'تم توزيع دور سري جديد! اضغط على بطاقتك لكشفه.',
+
+      roles: {
+        Mafia: {
+          title: 'مافيا (Mafia)',
+          cardLabel: 'ولد (Jack)',
+          description: 'تخلص من المواطنين كل ليلة وتظاهر بالبراءة خلال نقاشات النهار.'
+        },
+        Angel: {
+          title: 'ملاك (Angel)',
+          cardLabel: 'آص (Ace)',
+          description: 'اختر لاعباً واحداً كل ليلة لحمايته من اغتيال المافيا.'
+        },
+        Sheriff: {
+          title: 'شريف (Sheriff)',
+          cardLabel: 'شايب (King)',
+          description: 'تحقق من هوية لاعب واحد كل ليلة لمعرفة ما إذا كان من المافيا.'
+        },
+        Townsperson: {
+          title: 'مواطن (Townsperson)',
+          cardLabel: 'بطاقة عادية',
+          description: 'راقب، استنتج، وصوّت خلال النهار لكشف أعضاء المافيا وتقديمهم للمحاكمة.'
+        }
+      }
+    }
+  };
+
   // Application State
   const appState = {
+    lang: 'en',
     mode: null, // 'judge' | 'player' | null
     roomCode: null,
     judgeToken: null,
@@ -16,8 +389,13 @@
     room: null
   };
 
+  function dict() {
+    return I18N[appState.lang] || I18N.en;
+  }
+
   // DOM References
   const htmlEl = document.documentElement;
+  const langSelect = document.getElementById('lang-select');
   const themeToggleBtn = document.getElementById('theme-toggle');
   const themeIconEl = document.getElementById('theme-icon');
   const navRoomPill = document.getElementById('nav-room-pill');
@@ -87,7 +465,7 @@
   const playerRosterChips = document.getElementById('player-roster-chips');
 
   /* ==========================================================================
-     1. Theme Management (Light / Dark Mode with localStorage)
+     1. Theme & Language Management (localStorage)
      ========================================================================== */
   function initTheme() {
     const savedTheme = localStorage.getItem('mafia_theme') || 'light';
@@ -105,7 +483,49 @@
     setTheme(current === 'dark' ? 'light' : 'dark');
   });
 
+  function initLanguage() {
+    const savedLang = localStorage.getItem('mafia_lang') || 'en';
+    setLanguage(I18N[savedLang] ? savedLang : 'en');
+  }
+
+  function setLanguage(lang) {
+    appState.lang = I18N[lang] ? lang : 'en';
+    localStorage.setItem('mafia_lang', appState.lang);
+    langSelect.value = appState.lang;
+    htmlEl.setAttribute('lang', appState.lang);
+    htmlEl.setAttribute('dir', appState.lang === 'ar' ? 'rtl' : 'ltr');
+
+    const d = dict();
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      if (d[key]) {
+        el.textContent = d[key];
+      }
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      if (d[key]) {
+        el.setAttribute('placeholder', d[key]);
+      }
+    });
+
+    if (appState.mode === 'judge' && appState.roomCode) {
+      navRoomPill.textContent = d.roomPillJudge(appState.roomCode);
+    } else if (appState.mode === 'player' && appState.roomCode) {
+      navRoomPill.textContent = d.roomPillPlayer(appState.roomCode);
+    }
+
+    renderPlayerRoleCard();
+    renderRoomState();
+  }
+
+  langSelect.addEventListener('change', (e) => {
+    setLanguage(e.target.value);
+  });
+
   initTheme();
+  initLanguage();
 
   /* ==========================================================================
      2. Toast Helper & View Navigation
@@ -121,18 +541,19 @@
   }
 
   function switchView(viewName) {
+    const d = dict();
     viewLanding.classList.add('hidden');
     viewJudge.classList.add('hidden');
     viewPlayer.classList.add('hidden');
 
     if (viewName === 'judge') {
       viewJudge.classList.remove('hidden');
-      navRoomPill.textContent = `ROOM ${appState.roomCode} · #13`;
+      navRoomPill.textContent = d.roomPillJudge(appState.roomCode);
       navRoomPill.classList.remove('hidden');
       btnLeaveRoom.classList.remove('hidden');
     } else if (viewName === 'player') {
       viewPlayer.classList.remove('hidden');
-      navRoomPill.textContent = `ROOM ${appState.roomCode}`;
+      navRoomPill.textContent = d.roomPillPlayer(appState.roomCode);
       navRoomPill.classList.remove('hidden');
       btnLeaveRoom.classList.remove('hidden');
     } else {
@@ -190,7 +611,7 @@
       saveSession();
       switchView('judge');
       renderRoomState();
-      showToast(`Room ${res.roomCode} ready!`);
+      showToast(dict().toastRoomReady(res.roomCode));
     });
   });
 
@@ -198,10 +619,10 @@
     if (!appState.roomCode) return;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(appState.roomCode).then(() => {
-        showToast(`Copied code ${appState.roomCode}`);
+        showToast(dict().toastCopiedCode(appState.roomCode));
       });
     } else {
-      showToast(`Room Code: ${appState.roomCode}`);
+      showToast(dict().toastCopiedCode(appState.roomCode));
     }
   });
 
@@ -228,7 +649,7 @@
       if (!res || !res.ok) {
         return showToast((res && res.error) || 'Failed to deal roles.');
       }
-      showToast(res.message || 'Roles dealt privately to all players!');
+      showToast(dict().toastRolesDealt);
     });
   });
 
@@ -237,7 +658,7 @@
       if (!res || !res.ok) {
         return showToast((res && res.error) || 'Cannot start nominations.');
       }
-      showToast('Secret nomination voting started!');
+      showToast(dict().toastNominationsStarted);
     });
   });
 
@@ -246,7 +667,7 @@
       if (!res || !res.ok) {
         return showToast((res && res.error) || 'Failed to force tally.');
       }
-      showToast('Nominations tallied!');
+      showToast(dict().toastNominationsTallied);
     });
   });
 
@@ -255,20 +676,21 @@
       if (!res || !res.ok) {
         return showToast((res && res.error) || 'Failed to reset round.');
       }
-      showToast('Round votes & results cleared.');
+      showToast(dict().toastRoundReset);
     });
   });
 
   function renderJudgeView(room) {
+    const d = dict();
     judgeRoomCode.textContent = room.code;
-    judgeVoteCounter.textContent = `${room.votingProgress.submitted}/${room.votingProgress.totalLiving} voted`;
-    judgePhaseBadge.textContent = room.phase.toUpperCase();
+    judgeVoteCounter.textContent = d.votedCounter(room.votingProgress.submitted, room.votingProgress.totalLiving);
+    judgePhaseBadge.textContent = d[`phase_${room.phase}`] || room.phase.toUpperCase();
 
     if (room.rolesDealt) {
-      rolesDealtIndicator.textContent = 'Roles Dealt ✓';
+      rolesDealtIndicator.textContent = d.rolesDealtYes;
       rolesDealtIndicator.classList.add('dealt');
     } else {
-      rolesDealtIndicator.textContent = 'Not Dealt';
+      rolesDealtIndicator.textContent = d.rolesDealtNo;
       rolesDealtIndicator.classList.remove('dealt');
     }
 
@@ -276,10 +698,10 @@
 
     const connectedCount = room.players.filter((p) => p.connected).length;
     const aliveCount = room.players.filter((p) => p.alive).length;
-    judgeRosterSummary.textContent = `${connectedCount}/${room.players.length} Online · ${aliveCount} Alive`;
+    judgeRosterSummary.textContent = d.rosterSummary(connectedCount, room.players.length, aliveCount);
 
     if (room.players.length === 0) {
-      judgeRosterList.innerHTML = `<div class="empty-state">Waiting for players to join with code <strong>${room.code}</strong>...</div>`;
+      judgeRosterList.innerHTML = `<div class="empty-state">${d.waitingForPlayers(room.code)}</div>`;
       return;
     }
 
@@ -293,7 +715,7 @@
 
       const dot = document.createElement('span');
       dot.className = `conn-dot ${p.connected ? 'online' : 'offline'}`;
-      dot.title = p.connected ? 'Connected' : 'Disconnected';
+      dot.title = p.connected ? d.connected : d.disconnected;
 
       const seat = document.createElement('span');
       seat.className = 'seat-num';
@@ -313,15 +735,15 @@
       if (room.phase === 'voting' && p.alive) {
         const voteBadge = document.createElement('span');
         voteBadge.className = `vote-check ${p.hasVoted ? 'done' : ''}`;
-        voteBadge.textContent = p.hasVoted ? 'Voted' : 'Pending';
+        voteBadge.textContent = p.hasVoted ? d.votedTag : d.pendingTag;
         actions.appendChild(voteBadge);
       }
 
       const toggleBtn = document.createElement('button');
       toggleBtn.type = 'button';
       toggleBtn.className = `btn-status-toggle ${p.alive ? 'alive' : 'dead'}`;
-      toggleBtn.textContent = p.alive ? 'ALIVE' : 'DEAD';
-      toggleBtn.title = 'Click to toggle Alive / Dead';
+      toggleBtn.textContent = p.alive ? d.aliveStatus : d.deadStatus;
+      toggleBtn.title = d.toggleAliveTitle;
       toggleBtn.addEventListener('click', () => {
         socket.emit('judge:toggle_alive', { playerId: p.id });
       });
@@ -357,7 +779,7 @@
       switchView('player');
       renderPlayerRoleCard();
       renderRoomState();
-      showToast(`Joined Room ${res.roomCode} as ${res.name}`);
+      showToast(dict().toastJoinedAs(res.roomCode, res.name));
     });
   });
 
@@ -374,27 +796,29 @@
   });
 
   function renderPlayerRoleCard() {
+    const d = dict();
     const role = appState.myRole;
     if (!role) {
-      cardFrontSub.textContent = 'Waiting for Judge (#13) to deal roles...';
+      cardFrontSub.textContent = d.waitingJudgeDeal;
       roleRankTl.textContent = '?';
       roleSuitTl.textContent = '♠';
       roleRankBr.textContent = '?';
       roleSuitBr.textContent = '♠';
-      roleCardLabel.textContent = 'UNASSIGNED';
-      roleTitle.textContent = 'No Role Yet';
-      roleDescription.textContent = 'Wait for the Judge to deal roles. Once dealt, tap this card to privately inspect your role.';
+      roleCardLabel.textContent = d.unassignedLabel;
+      roleTitle.textContent = d.noRoleYetTitle;
+      roleDescription.textContent = d.noRoleYetDesc;
       return;
     }
 
-    cardFrontSub.textContent = 'Role dealt! Tap to privately reveal';
+    const localizedRole = (d.roles && d.roles[role.title]) || role;
+    cardFrontSub.textContent = d.roleDealtTapReveal;
     roleRankTl.textContent = role.cardRank;
     roleSuitTl.textContent = role.suit;
     roleRankBr.textContent = role.cardRank;
     roleSuitBr.textContent = role.suit;
-    roleCardLabel.textContent = `CARD: ${role.cardLabel.toUpperCase()}`;
-    roleTitle.textContent = role.title;
-    roleDescription.textContent = role.description;
+    roleCardLabel.textContent = d.cardPrefix(localizedRole.cardLabel);
+    roleTitle.textContent = localizedRole.title;
+    roleDescription.textContent = localizedRole.description;
   }
 
   // Prevent selecting the exact same player in both dropdowns
@@ -422,7 +846,7 @@
     const nom2 = selectNominee2.value;
 
     if (!nom1 || !nom2 || nom1 === nom2) {
-      return showToast('Please select 2 different living players.');
+      return showToast(dict().toastSelect2Diff);
     }
 
     socket.emit('player:submit_vote', { nominees: [nom1, nom2] }, (res) => {
@@ -431,16 +855,17 @@
       }
       appState.myVote = res.myVote;
       renderRoomState();
-      showToast('Secret nomination submitted!');
+      showToast(dict().toastVoteSubmitted);
     });
   });
 
   function populateNomineeOptions(livingPlayers, preserveValues) {
+    const d = dict();
     const prev1 = preserveValues ? selectNominee1.value : '';
     const prev2 = preserveValues ? selectNominee2.value : '';
 
-    selectNominee1.innerHTML = '<option value="">Select 1st living player...</option>';
-    selectNominee2.innerHTML = '<option value="">Select 2nd living player...</option>';
+    selectNominee1.innerHTML = `<option value="">${d.select1stPlaceholder}</option>`;
+    selectNominee2.innerHTML = `<option value="">${d.select2ndPlaceholder}</option>`;
 
     livingPlayers.forEach((p) => {
       const opt1 = document.createElement('option');
@@ -470,22 +895,23 @@
   }
 
   function renderPlayerView(room) {
+    const d = dict();
     const me = room.players.find((p) => p.id === appState.playerId);
     if (!me) return;
 
     playerDisplayName.textContent = `#${me.seatNumber} ${me.name}`;
     if (me.alive) {
-      playerStatusBadge.textContent = 'ALIVE';
+      playerStatusBadge.textContent = d.aliveStatus;
       playerStatusBadge.className = 'status-badge status-alive';
     } else {
-      playerStatusBadge.textContent = 'DEAD';
+      playerStatusBadge.textContent = d.deadStatus;
       playerStatusBadge.className = 'status-badge status-dead';
     }
 
     // Secret Nomination Section visibility & state
     if (room.phase === 'voting') {
       playerVotingSection.classList.remove('hidden');
-      playerVoteProgress.textContent = `${room.votingProgress.submitted}/${room.votingProgress.totalLiving} voted`;
+      playerVoteProgress.textContent = d.votedCounter(room.votingProgress.submitted, room.votingProgress.totalLiving);
 
       const livingPlayers = room.players.filter((p) => p.alive);
       populateNomineeOptions(livingPlayers, true);
@@ -493,25 +919,25 @@
       const hasVoted = me.hasVoted || Boolean(appState.myVote && appState.myVote.length === 2);
 
       if (!me.alive) {
-        votingInstructions.textContent = 'You have been eliminated. Dead players cannot vote in nominations.';
+        votingInstructions.textContent = d.votingInstrDead;
         selectNominee1.disabled = true;
         selectNominee2.disabled = true;
         btnSubmitVote.disabled = true;
-        btnSubmitVote.textContent = 'Eliminated (Cannot Vote)';
+        btnSubmitVote.textContent = d.btnEliminated;
         voteSubmittedNotice.classList.add('hidden');
       } else if (hasVoted) {
-        votingInstructions.innerHTML = 'Privately select <strong>2 different living players</strong> to nominate for trial.';
+        votingInstructions.innerHTML = d.votingInstrDefault;
         selectNominee1.disabled = true;
         selectNominee2.disabled = true;
         btnSubmitVote.disabled = true;
-        btnSubmitVote.textContent = 'Vote Submitted';
+        btnSubmitVote.textContent = d.btnVoteSubmitted;
         voteSubmittedNotice.classList.remove('hidden');
       } else {
-        votingInstructions.innerHTML = 'Privately select <strong>2 different living players</strong> to nominate for trial.';
+        votingInstructions.innerHTML = d.votingInstrDefault;
         selectNominee1.disabled = false;
         selectNominee2.disabled = false;
         btnSubmitVote.disabled = false;
-        btnSubmitVote.textContent = 'Submit Vote';
+        btnSubmitVote.textContent = d.btnSubmitVote;
         voteSubmittedNotice.classList.add('hidden');
       }
     } else {
@@ -520,7 +946,7 @@
 
     // Table Roster Chips
     const aliveCount = room.players.filter((p) => p.alive).length;
-    playerTableCount.textContent = `${aliveCount}/${room.players.length} Alive`;
+    playerTableCount.textContent = d.tableAliveSummary(aliveCount, room.players.length);
     playerRosterChips.innerHTML = '';
 
     room.players.forEach((p) => {
@@ -534,19 +960,33 @@
   /* ==========================================================================
      5. Shared Room State & Trial Results Banner
      ========================================================================== */
+  function formatTrialAnnouncement(nomineesResult) {
+    const d = dict();
+    if (!nomineesResult) return '';
+    const noms = nomineesResult.nominees || [];
+    if (noms.length === 2) {
+      return d.onTrialTwo(noms[0].name, noms[1].name);
+    }
+    if (noms.length === 1) {
+      return d.onTrialOne(noms[0].name);
+    }
+    return d.onTrialNone;
+  }
+
   function renderTrialBanner(room) {
+    const d = dict();
     if (room && room.nomineesResult && room.nomineesResult.text) {
       trialBanner.classList.remove('hidden');
-      trialAnnouncementText.textContent = room.nomineesResult.text;
+      trialAnnouncementText.textContent = formatTrialAnnouncement(room.nomineesResult);
 
       if (Array.isArray(room.nomineesResult.breakdown) && room.nomineesResult.breakdown.length > 0) {
         const topSummary = room.nomineesResult.breakdown
           .slice(0, 5)
           .map((item) => `${item.name} (${item.votes})`)
           .join(' · ');
-        trialBreakdown.textContent = `Tally: ${topSummary}`;
+        trialBreakdown.textContent = d.tallyPrefix(topSummary);
       } else {
-        trialBreakdown.textContent = 'No votes were cast.';
+        trialBreakdown.textContent = d.noVotesCast;
       }
     } else {
       trialBanner.classList.add('hidden');
@@ -582,7 +1022,7 @@
     // Automatically hide the card first so role isn't accidentally flashed if open
     roleFlipCard.classList.remove('is-flipped');
     renderPlayerRoleCard();
-    showToast('New secret role dealt! Tap your card to reveal.');
+    showToast(dict().toastNewRoleDealt);
   });
 
   socket.on('voting:started', () => {
@@ -591,13 +1031,13 @@
     selectNominee2.value = '';
     renderRoomState();
     if (appState.mode === 'player') {
-      showToast('Secret Trial Nominations have started!');
+      showToast(dict().toastNominationsStarted);
     }
   });
 
   socket.on('voting:results', (result) => {
-    if (result && result.text) {
-      showToast(result.text);
+    if (result) {
+      showToast(formatTrialAnnouncement(result));
     }
   });
 
@@ -658,4 +1098,3 @@
     }
   });
 })();
-

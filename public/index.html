@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" dir="ltr" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -12,11 +12,16 @@
     <div class="navbar-inner">
       <div class="brand">
         <span class="brand-mark">♠</span>
-        <span class="brand-title">MAFIA</span>
+        <span class="brand-title" data-i18n="brandTitle">MAFIA</span>
         <span id="nav-room-pill" class="room-pill hidden"></span>
       </div>
       <div class="nav-actions">
-        <button id="btn-leave-room" class="btn-ghost btn-sm hidden" type="button" title="Leave Room">Leave</button>
+        <button id="btn-leave-room" class="btn-ghost btn-sm hidden" type="button" data-i18n="leaveBtn">Leave</button>
+        <select id="lang-select" class="lang-select" aria-label="Select Language">
+          <option value="en">EN</option>
+          <option value="fr">FR</option>
+          <option value="ar">العربية</option>
+        </select>
         <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle Light/Dark Theme" title="Toggle Theme">
           <span id="theme-icon">🌙</span>
         </button>
@@ -30,7 +35,7 @@
 
     <!-- Global Trial Announcement Banner (shown in both Judge & Player views when results are out) -->
     <section id="trial-banner" class="trial-banner hidden" aria-live="assertive">
-      <div class="trial-badge">TRIAL NOMINATION RESULT</div>
+      <div class="trial-badge" data-i18n="trialBadge">TRIAL NOMINATION RESULT</div>
       <h2 id="trial-announcement-text" class="trial-title">On Trial: —</h2>
       <div id="trial-breakdown" class="trial-breakdown"></div>
     </section>
@@ -40,62 +45,68 @@
     =========================================== -->
     <section id="view-landing" class="view active">
       <div class="hero">
-        <h1>Mafia Digital Assistant</h1>
-        <p class="subtitle">Minimalist secret role dealing &amp; trial nomination tallying for in-person games (5–25 players).</p>
+        <h1 data-i18n="heroTitle">Mafia Digital Assistant</h1>
+        <p class="subtitle" data-i18n="heroSubtitle">Minimalist secret role dealing &amp; trial nomination tallying for in-person games (5–25 players).</p>
       </div>
 
       <div class="landing-grid">
         <!-- Player Join Card -->
         <div class="card">
           <div class="card-header">
-            <span class="badge">PLAYER (#1–#12+)</span>
-            <h2>Join a Table</h2>
+            <span class="badge" data-i18n="playerBadge">PLAYER (#1–#12+)</span>
+            <h2 data-i18n="joinTableHeading">Join a Table</h2>
           </div>
           <form id="form-join-player" class="stack-form" autocomplete="off">
             <div class="field">
-              <label for="input-room-code">Room Code</label>
+              <label for="input-room-code" data-i18n="roomCodeLabel">Room Code</label>
               <input
                 id="input-room-code"
                 type="text"
                 maxlength="4"
                 placeholder="e.g. K7X2"
+                data-i18n-placeholder="roomCodePlaceholder"
                 required
                 class="input-code"
               />
             </div>
             <div class="field">
-              <label for="input-player-name">Your Nickname</label>
+              <label for="input-player-name" data-i18n="nicknameLabel">Your Nickname</label>
               <input
                 id="input-player-name"
                 type="text"
                 maxlength="24"
                 placeholder="Enter your name"
+                data-i18n-placeholder="nicknamePlaceholder"
                 required
               />
             </div>
-            <button type="submit" class="btn btn-primary btn-block">Join Game</button>
+            <button type="submit" class="btn btn-primary btn-block" data-i18n="joinGameBtn">Join Game</button>
           </form>
         </div>
 
         <!-- Judge (#13) Create Room Card -->
         <div class="card card-subtle">
           <div class="card-header">
-            <span class="badge badge-accent">MODERATOR (#13)</span>
-            <h2>Judge Console</h2>
+            <span class="badge badge-accent" data-i18n="moderatorBadge">MODERATOR (#13)</span>
+            <h2 data-i18n="judgeConsoleHeading">Judge Console</h2>
           </div>
-          <p class="muted-text">Host a new game room to deal secret roles, manage player status, and trigger secret trial nominations.</p>
+          <p class="muted-text" data-i18n="judgeConsoleDesc">Host a new game room to deal secret roles, manage player status, and trigger secret trial nominations.</p>
           <form id="form-create-judge" class="stack-form" autocomplete="off">
             <div class="field">
-              <label for="input-custom-code">Custom 4-Char Code <span class="optional">(optional)</span></label>
+              <label for="input-custom-code">
+                <span data-i18n="customCodeLabel">Custom 4-Char Code</span>
+                <span class="optional" data-i18n="optionalLabel">(optional)</span>
+              </label>
               <input
                 id="input-custom-code"
                 type="text"
                 maxlength="4"
                 placeholder="Auto-generate"
+                data-i18n-placeholder="customCodePlaceholder"
                 class="input-code"
               />
             </div>
-            <button type="submit" class="btn btn-secondary btn-block">Create Room as Judge (#13)</button>
+            <button type="submit" class="btn btn-secondary btn-block" data-i18n="createRoomBtn">Create Room as Judge (#13)</button>
           </form>
         </div>
       </div>
@@ -108,14 +119,14 @@
       <!-- Room Code & Live Tally Bar -->
       <div class="judge-top-bar card">
         <div class="room-code-display">
-          <span class="meta-label">ROOM CODE</span>
+          <span class="meta-label" data-i18n="roomCodeMeta">ROOM CODE</span>
           <div class="code-value-row">
             <strong id="judge-room-code" class="code-large">----</strong>
-            <button id="btn-copy-code" class="btn-ghost btn-xs" type="button">Copy</button>
+            <button id="btn-copy-code" class="btn-ghost btn-xs" type="button" data-i18n="copyBtn">Copy</button>
           </div>
         </div>
         <div class="tally-tracker">
-          <span class="meta-label">LIVE VOTE TALLY</span>
+          <span class="meta-label" data-i18n="liveVoteTallyMeta">LIVE VOTE TALLY</span>
           <div class="tally-pill-wrap">
             <span id="judge-vote-counter" class="tally-counter">0/0 voted</span>
             <span id="judge-phase-badge" class="phase-badge">LOBBY</span>
@@ -129,18 +140,18 @@
           <!-- Game Controls -->
           <div class="card">
             <div class="card-header-inline">
-              <h3>Round &amp; Voting Controls</h3>
+              <h3 data-i18n="roundControlsHeading">Round &amp; Voting Controls</h3>
             </div>
-            <p class="muted-text small-text">Trigger secret 2-person nominations for all living players or force tally early.</p>
+            <p class="muted-text small-text" data-i18n="roundControlsDesc">Trigger secret 2-person nominations for all living players or force tally early.</p>
             <div class="control-buttons">
-              <button id="btn-start-nominations" class="btn btn-primary btn-block" type="button">
+              <button id="btn-start-nominations" class="btn btn-primary btn-block" type="button" data-i18n="startNominationsBtn">
                 Start Secret Nominations
               </button>
               <div class="btn-row-2">
-                <button id="btn-force-tally" class="btn btn-secondary" type="button">
+                <button id="btn-force-tally" class="btn btn-secondary" type="button" data-i18n="forceTallyBtn">
                   Force Tally Nominations
                 </button>
-                <button id="btn-reset-round" class="btn btn-outline" type="button">
+                <button id="btn-reset-round" class="btn btn-outline" type="button" data-i18n="resetRoundBtn">
                   Reset Round
                 </button>
               </div>
@@ -150,32 +161,32 @@
           <!-- Role Distribution Setup -->
           <div class="card">
             <div class="card-header-inline">
-              <h3>Role Setup &amp; Dealing</h3>
+              <h3 data-i18n="roleSetupHeading">Role Setup &amp; Dealing</h3>
               <span id="roles-dealt-indicator" class="status-tag">Not Dealt</span>
             </div>
-            <p class="muted-text small-text">Remaining connected players automatically become <strong>Townspeople</strong>.</p>
+            <p class="muted-text small-text" data-i18n="roleSetupDesc">Remaining connected players automatically become Townspeople.</p>
 
             <div class="role-inputs-grid">
               <div class="field">
-                <label for="role-count-mafia">Mafia (Jack)</label>
+                <label for="role-count-mafia" data-i18n="roleInputMafia">Mafia (Jack)</label>
                 <input id="role-count-mafia" type="number" min="0" max="25" value="3" />
               </div>
               <div class="field">
-                <label for="role-count-angel">Angel (Ace)</label>
+                <label for="role-count-angel" data-i18n="roleInputAngel">Angel (Ace)</label>
                 <input id="role-count-angel" type="number" min="0" max="25" value="1" />
               </div>
               <div class="field">
-                <label for="role-count-sheriff">Sheriff (King)</label>
+                <label for="role-count-sheriff" data-i18n="roleInputSheriff">Sheriff (King)</label>
                 <input id="role-count-sheriff" type="number" min="0" max="25" value="1" />
               </div>
             </div>
 
             <div class="role-summary-bar">
-              <span>Townspeople (auto): <strong id="role-count-town">0</strong></span>
-              <span>Total Players: <strong id="role-total-players">0</strong></span>
+              <span><span data-i18n="townspeopleAutoLabel">Townspeople (auto):</span> <strong id="role-count-town">0</strong></span>
+              <span><span data-i18n="totalPlayersLabel">Total Players:</span> <strong id="role-total-players">0</strong></span>
             </div>
 
-            <button id="btn-deal-roles" class="btn btn-primary btn-block" type="button">
+            <button id="btn-deal-roles" class="btn btn-primary btn-block" type="button" data-i18n="dealRolesBtn">
               Deal Roles
             </button>
           </div>
@@ -184,8 +195,8 @@
         <!-- Right/Bottom Column: Live Connected Player Roster -->
         <div class="card">
           <div class="card-header-inline">
-            <h3>Player Roster</h3>
-            <span id="judge-roster-summary" class="badge">0 Connected · 0 Alive</span>
+            <h3 data-i18n="playerRosterHeading">Player Roster</h3>
+            <span id="judge-roster-summary" class="badge">0 Online · 0 Alive</span>
           </div>
           <div id="judge-roster-list" class="roster-list">
             <div class="empty-state">Waiting for players to join with code...</div>
@@ -201,7 +212,7 @@
       <!-- Player Identity & Status Header -->
       <div class="player-header card">
         <div class="player-id-group">
-          <span class="meta-label">PLAYER</span>
+          <span class="meta-label" data-i18n="playerMeta">PLAYER</span>
           <h2 id="player-display-name" class="player-name">—</h2>
         </div>
         <div class="player-status-group">
@@ -212,8 +223,8 @@
       <!-- Secret Role Card (3D Flip) -->
       <div class="role-card-section">
         <div class="section-header-row">
-          <span class="meta-label">SECRET IDENTITY CARD</span>
-          <span class="tap-hint">Tap card to reveal / hide</span>
+          <span class="meta-label" data-i18n="secretIdentityMeta">SECRET IDENTITY CARD</span>
+          <span class="tap-hint" data-i18n="tapToFlipHint">Tap card to reveal / hide</span>
         </div>
 
         <div id="role-flip-card" class="flip-card" tabindex="0" role="button" aria-label="Secret Role Card. Tap to flip.">
@@ -222,7 +233,7 @@
             <div class="flip-card-front">
               <div class="card-pattern">
                 <div class="card-emblem">♠ ♥ ♦ ♣</div>
-                <div class="card-front-title">SECRET ROLE</div>
+                <div class="card-front-title" data-i18n="secretRoleFrontTitle">SECRET ROLE</div>
                 <div id="card-front-sub" class="card-front-sub">Waiting for Judge to deal...</div>
               </div>
             </div>
@@ -250,23 +261,23 @@
       <!-- Secret Nomination Section (Visible ONLY during voting phase) -->
       <div id="player-voting-section" class="card voting-card hidden">
         <div class="card-header-inline">
-          <h3>Secret Trial Nominations</h3>
+          <h3 data-i18n="secretNominationsHeading">Secret Trial Nominations</h3>
           <span id="player-vote-progress" class="badge">0/0 voted</span>
         </div>
         <p id="voting-instructions" class="muted-text small-text">
-          Privately select <strong>2 different living players</strong> to nominate for trial.
+          Privately select 2 different living players to nominate for trial.
         </p>
 
         <form id="form-submit-vote" class="stack-form">
           <div class="field">
-            <label for="select-nominee-1">First Nominee</label>
+            <label for="select-nominee-1" data-i18n="firstNomineeLabel">First Nominee</label>
             <select id="select-nominee-1" required>
               <option value="">Select 1st living player...</option>
             </select>
           </div>
 
           <div class="field">
-            <label for="select-nominee-2">Second Nominee</label>
+            <label for="select-nominee-2" data-i18n="secondNomineeLabel">Second Nominee</label>
             <select id="select-nominee-2" required>
               <option value="">Select 2nd living player...</option>
             </select>
@@ -277,7 +288,7 @@
           </button>
         </form>
 
-        <div id="vote-submitted-notice" class="vote-submitted-notice hidden">
+        <div id="vote-submitted-notice" class="vote-submitted-notice hidden" data-i18n="voteSubmittedNotice">
           ✓ Your secret nomination has been locked in. Waiting for remaining players...
         </div>
       </div>
@@ -285,7 +296,7 @@
       <!-- Compact Table Roster for Players -->
       <div class="card">
         <div class="card-header-inline">
-          <h3>Table Players</h3>
+          <h3 data-i18n="tablePlayersHeading">Table Players</h3>
           <span id="player-table-count" class="badge">0 Alive</span>
         </div>
         <div id="player-roster-chips" class="player-chips-grid"></div>
@@ -297,4 +308,3 @@
   <script src="/app.js"></script>
 </body>
 </html>
-

@@ -158,6 +158,23 @@ body {
   gap: 0.5rem;
 }
 
+.lang-select {
+  width: auto;
+  height: 38px;
+  padding: 0 0.55rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.lang-select:hover {
+  border-color: var(--border-strong);
+}
+
 .theme-toggle {
   width: 38px;
   height: 38px;
@@ -558,7 +575,17 @@ select:focus {
 }
 
 .tally-tracker {
-  text-align: right;
+  text-align: end;
+}
+
+[dir="rtl"] body {
+  font-family: "Segoe UI", Tahoma, "Noto Sans Arabic", Arial, sans-serif;
+}
+
+[dir="rtl"] .input-code,
+[dir="rtl"] .code-large {
+  direction: ltr;
+  unicode-bidi: embed;
 }
 
 .tally-pill-wrap {
