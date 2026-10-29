@@ -481,6 +481,50 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Judge ends/resets the current game (revives all players, clears roles, votes, and results)
+  socket.on('judge:new_game', (payload = {}, callback) => {
+    const room = rooms[socket.data.roomCode];
+    if (!room || !socket.data.isJudge) {
+      return callback && callback({ ok: false, error: 'Unauthorized.' });
+    }
+
+    room.phase = 'lobby';
+    room.rolesDealt = false;
+    room.votes = {};
+    room.nomineesResult = null;
+
+    room.players.forEach((p) => {
+      p.alive = true;
+      p.role = null;
+      if (p.socketId) {
+        io.to(p.socketId).emit('player:role_assigned', null);
+      }
+    });
+
+    broadcastRoomState(room.code);
+    io.to(room.code).emit('game:reset');
+
+    if (typeof callback === 'function') {
+      callback({ ok: true });
+    }
+  });
+
+  // Judge ends the game & closes the room completely
+  socket.on('judge:end_game', (payload = {}, callback) => {
+    const code = socket.data.roomCode;
+    const room = rooms[code];
+    if (!room || !socket.data.isJudge) {
+      return callback && callback({ ok: false, error: 'Unauthorized.' });
+    }
+
+    io.to(code).emit('game:ended');
+    delete rooms[code];
+
+    if (typeof callback === 'function') {
+      callback({ ok: true });
+    }
+  });
+
   // Judge removes a disconnected player if needed
   socket.on('judge:remove_player', (payload = {}, callback) => {
     const room = rooms[socket.data.roomCode];

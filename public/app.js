@@ -36,6 +36,8 @@
       startNominationsBtn: 'Start Secret Nominations',
       forceTallyBtn: 'Force Tally Nominations',
       resetRoundBtn: 'Reset Round',
+      newGameBtn: 'New Game (Keep Players)',
+      endGameBtn: 'End Game',
       roleSetupHeading: 'Role Setup & Dealing',
       roleSetupDesc: 'Remaining connected players automatically become Townspeople.',
       roleInputMafia: 'Mafia (Jack)',
@@ -106,6 +108,9 @@
       toastSelect2Diff: 'Please select 2 different living players.',
       toastVoteSubmitted: 'Secret nomination submitted!',
       toastNewRoleDealt: 'New secret role dealt! Tap your card to reveal.',
+      toastNewGameStarted: 'New game ready! All players revived & roles cleared.',
+      toastGameEnded: 'The Judge (#13) has ended the game.',
+      confirmEndGame: 'Are you sure you want to end the game and close this room for all players?',
 
       roles: {
         Mafia: {
@@ -159,6 +164,8 @@
       startNominationsBtn: 'Lancer les Nominations Secrètes',
       forceTallyBtn: 'Forcer le Décompte',
       resetRoundBtn: 'Réinitialiser la Manche',
+      newGameBtn: 'Nouvelle Partie (Garder Joueurs)',
+      endGameBtn: 'Terminer la Partie',
       roleSetupHeading: 'Configuration & Distribution des Rôles',
       roleSetupDesc: 'Les autres joueurs connectés deviennent automatiquement des Villageois.',
       roleInputMafia: 'Mafia (Valet)',
@@ -228,6 +235,9 @@
       toastSelect2Diff: 'Veuillez sélectionner 2 joueurs en vie différents.',
       toastVoteSubmitted: 'Nomination secrète envoyée !',
       toastNewRoleDealt: 'Nouveau rôle secret reçu ! Touchez votre carte.',
+      toastNewGameStarted: 'Nouvelle partie prête ! Joueurs réanimés et rôles effacés.',
+      toastGameEnded: 'Le Juge (#13) a mis fin à la partie.',
+      confirmEndGame: 'Voulez-vous vraiment terminer la partie et fermer la salle pour tous les joueurs ?',
 
       roles: {
         Mafia: {
@@ -281,6 +291,8 @@
       startNominationsBtn: 'بدء الترشيح السري',
       forceTallyBtn: 'فرز الأصوات الآن',
       resetRoundBtn: 'إعادة ضبط الجولة',
+      newGameBtn: 'لعبة جديدة (نفس اللاعبين)',
+      endGameBtn: 'إنهاء اللعبة',
       roleSetupHeading: 'إعداد وتوزيع الأدوار',
       roleSetupDesc: 'بقية اللاعبين المتصلين يصبحون تلقائياً من المواطنين (Townspeople).',
       roleInputMafia: 'مافيا (ولد / Jack)',
@@ -350,6 +362,9 @@
       toastSelect2Diff: 'يرجى اختيار لاعبين حيين مختلفين.',
       toastVoteSubmitted: 'تم إرسال ترشيحك السري!',
       toastNewRoleDealt: 'تم توزيع دور سري جديد! اضغط على بطاقتك لكشفه.',
+      toastNewGameStarted: 'بدأت لعبة جديدة! تمت إعادة جميع اللاعبين ومسح الأدوار.',
+      toastGameEnded: 'قام القاضي (#13) بإنهاء اللعبة.',
+      confirmEndGame: 'هل أنت متأكد أنك تريد إنهاء اللعبة وإغلاق الغرفة لجميع اللاعبين؟',
 
       roles: {
         Mafia: {
@@ -427,6 +442,8 @@
   const btnStartNominations = document.getElementById('btn-start-nominations');
   const btnForceTally = document.getElementById('btn-force-tally');
   const btnResetRound = document.getElementById('btn-reset-round');
+  const btnNewGame = document.getElementById('btn-new-game');
+  const btnEndGame = document.getElementById('btn-end-game');
 
   const roleCountMafia = document.getElementById('role-count-mafia');
   const roleCountAngel = document.getElementById('role-count-angel');
@@ -677,6 +694,26 @@
         return showToast((res && res.error) || 'Failed to reset round.');
       }
       showToast(dict().toastRoundReset);
+    });
+  });
+
+  btnNewGame.addEventListener('click', () => {
+    socket.emit('judge:new_game', {}, (res) => {
+      if (!res || !res.ok) {
+        return showToast((res && res.error) || 'Failed to start new game.');
+      }
+      showToast(dict().toastNewGameStarted);
+    });
+  });
+
+  btnEndGame.addEventListener('click', () => {
+    if (!window.confirm(dict().confirmEndGame)) return;
+    socket.emit('judge:end_game', {}, (res) => {
+      if (!res || !res.ok) {
+        return showToast((res && res.error) || 'Failed to end game.');
+      }
+      clearSession();
+      showToast(dict().toastGameEnded);
     });
   });
 
@@ -1022,7 +1059,9 @@
     // Automatically hide the card first so role isn't accidentally flashed if open
     roleFlipCard.classList.remove('is-flipped');
     renderPlayerRoleCard();
-    showToast(dict().toastNewRoleDealt);
+    if (role) {
+      showToast(dict().toastNewRoleDealt);
+    }
   });
 
   socket.on('voting:started', () => {
@@ -1046,6 +1085,24 @@
     selectNominee1.value = '';
     selectNominee2.value = '';
     renderRoomState();
+  });
+
+  socket.on('game:reset', () => {
+    appState.myRole = null;
+    appState.myVote = null;
+    roleFlipCard.classList.remove('is-flipped');
+    selectNominee1.value = '';
+    selectNominee2.value = '';
+    renderPlayerRoleCard();
+    renderRoomState();
+    if (appState.mode === 'player') {
+      showToast(dict().toastNewGameStarted);
+    }
+  });
+
+  socket.on('game:ended', () => {
+    clearSession();
+    showToast(dict().toastGameEnded);
   });
 
   socket.on('connect', () => {

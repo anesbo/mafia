@@ -420,6 +420,16 @@ select:focus {
   border-color: var(--border-strong);
 }
 
+.btn-danger {
+  background-color: var(--status-dead-bg);
+  color: var(--status-dead-text);
+  border-color: var(--status-dead-border);
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--border-color);
